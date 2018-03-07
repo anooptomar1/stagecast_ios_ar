@@ -87,6 +87,7 @@ class NodeObject2D: SCNNode {
             z = 0.01
         }
         self.eulerAngles = SCNVector3Make(atan(offsetVertical/z), offsetAngle, 0.0)
+        // Maybe I have to change this - try it out with z-part: atan(offsetVertical/x)
         
         if animationStartingOpacity != nil {
             self.opacity = animationStartingOpacity!
@@ -94,14 +95,7 @@ class NodeObject2D: SCNNode {
     }
     
     func animate(){
-        print("Animation function")
-        print(self.animationStartingOpacity, self.animationEndingOpacity, self.animationTime, self.animationTranslationVector)
         if (self.animationEndingOpacity != nil) && (self.animationStartingOpacity != nil) && self.animationTranslationVector != nil && self.animationTime != nil {
-            print("Animate")
-            /*SCNTransaction.animationDuration = animationTime!
-            self.position = self.position + animationTranslationVector!
-            self.opacity = animationEndingOpacity!
-            */
             
             let animationOpacity = CABasicAnimation(keyPath: "opacity")
             animationOpacity.fromValue = self.animationStartingOpacity
@@ -127,18 +121,6 @@ class NodeObject2D: SCNNode {
         }else{
             return
         }
-        
-        /*
-        if animateBack {
-            SCNTransaction.animationDuration = animationTime!
-            self.position = self.position - animationTranslationVector!
-            self.opacity = animationStartingOpacity!
-            
-        }
-        
-        if animationRepeats {
-            self.animate()
-        }*/
         
         
     }

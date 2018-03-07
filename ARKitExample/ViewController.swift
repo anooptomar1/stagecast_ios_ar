@@ -11,17 +11,19 @@ import SceneKit
 import UIKit
 import Photos
 
-import Vision
 
 class ViewController: UIViewController, ARSCNViewDelegate, SCNSceneRendererDelegate {
 	
+    
+    
     // MARK: - Main Setup & View Controller methods
     override func viewDidLoad() {
         super.viewDidLoad()
 
+        
         setupScene()
         
-        if let worldSessionConfig = sessionConfig as? ARWorldTrackingConfiguration{//ARWorldTrackingSessionConfiguration{
+        if let worldSessionConfig = sessionConfig as? ARWorldTrackingConfiguration{
             worldSessionConfig.planeDetection = .horizontal
             session.run(worldSessionConfig, options: [.resetTracking, .removeExistingAnchors])
         }
@@ -44,22 +46,10 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNSceneRendererDeleg
     // MARK: - ARKit / ARSCNView
     let session = ARSession()
     let sessionConfig = ARWorldTrackingConfiguration()
-	/*var sessionConfig: ARSessionConfiguration = ARWorldTrackingSessionConfiguration()
-	var use3DOFTracking = false {
-		didSet {
-			if use3DOFTracking {
-				sessionConfig = ARSessionConfiguration()
-			}
-			sessionConfig.isLightEstimationEnabled = UserDefaults.standard.bool(for: .ambientLightEstimation)
-			session.run(sessionConfig)
-		}
-	}*/
-    
     
     
 	var use3DOFTrackingFallback = false
     @IBOutlet var sceneView: ARSCNView!
-	var screenCenter: CGPoint?
     
     func setupScene() {
         // set up sceneView
@@ -74,9 +64,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNSceneRendererDeleg
 		
 		enableEnvironmentMapWithIntensity(25.0)
 		
-		DispatchQueue.main.async {
-			self.screenCenter = self.sceneView.bounds.mid
-		}
 		
 		if let camera = sceneView.pointOfView?.camera {
 			camera.wantsHDR = true
@@ -120,6 +107,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNSceneRendererDeleg
 		}
 	}
 	
+    /*
     func renderer(_ renderer: SCNSceneRenderer, didAdd node: SCNNode, for anchor: ARAnchor) {
         DispatchQueue.main.async {
             if let planeAnchor = anchor as? ARPlaneAnchor {
@@ -142,12 +130,11 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNSceneRendererDeleg
                 
             }
         }
-    }
+    }*/
 	
-	var trackingFallbackTimer: Timer?
 
 	
-	
+	/*
     func session(_ session: ARSession, didFailWithError error: Error) {
 
         guard let arError = error as? ARError else { return }
@@ -168,16 +155,16 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNSceneRendererDeleg
 		}
 		
         //TODO: Error message
-	}
-	
+	}*/
+	/*
 		
 	func sessionInterruptionEnded(_ session: ARSession) {
 		session.run(sessionConfig, options: [.resetTracking, .removeExistingAnchors])
 		restartExperience(self)
-	}
+	}*/
 	
     // MARK: - Ambient Light Estimation
-	
+	/*
 	func toggleAmbientLightEstimation(_ enabled: Bool) {
 		
         if enabled {
@@ -193,13 +180,13 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNSceneRendererDeleg
 				session.run(sessionConfig)
 			}
         }
-    }
+    }*/
 
     
 	
 	
-	var dragOnInfinitePlanesEnabled = false
 	
+	/*
 	func worldPositionFromScreenPosition(_ position: CGPoint,
 	                                     objectPos: SCNVector3?,
 	                                     infinitePlane: Bool = false) -> (position: SCNVector3?, planeAnchor: ARPlaneAnchor?, hitAPlane: Bool) {
@@ -271,7 +258,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNSceneRendererDeleg
 	
 	// Use average of recent virtual object distances to avoid rapid changes in object scale.
 	var recentVirtualObjectDistances = [CGFloat]()
-	
+	*/
 
 
    
@@ -288,6 +275,9 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNSceneRendererDeleg
 			
 			
 			self.restartExperienceButton.setImage(#imageLiteral(resourceName: "restart"), for: [])
+            
+            
+            self.removeAllNodes()
 			
 			// Disable Restart button for five seconds in order to give the session enough time to restart.
 			DispatchQueue.main.asyncAfter(deadline: .now() + 5.0, execute: {
@@ -353,15 +343,27 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNSceneRendererDeleg
     
     var nodes: [NodeObject2D] = []
     
+    func removeAllNodes(){
+        for node in nodes {
+            node.removeFromParentNode()
+        }
+        nodes.removeAll()
+    }
+    
     func place2DImage(width: CGFloat, distanceToUser: Float, offsetVert: Float, offsetAngle: Float, image: UIImage) {
         
         guard let currentFrame = self.sceneView.session.currentFrame else {
             return
         }
         
+        
         let height = width*image.size.height/image.size.width
         let plane = SCNPlane(width: width, height: height)
+        
+        
         plane.firstMaterial?.diffuse.contents = image
+        
+        
         
         let node = NodeObject2D(width: width, distanceToUser: distanceToUser, offsetVertical: offsetVert, offsetAngle: offsetAngle)
         
@@ -369,11 +371,11 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNSceneRendererDeleg
         
         node.geometry = plane
         
+        
         self.nodes.append(node)
         self.sceneView.scene.rootNode.addChildNode(node)
         
         node.placeObject(currentFrame: currentFrame)
-        
         
     }
     
@@ -403,7 +405,136 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNSceneRendererDeleg
         
     }
     
+   
     
+    
+    
+    func place2DGif(width: CGFloat, distanceToUser: Float, offsetVert: Float, offsetAngle: Float, url: URL) {
+        
+        guard let currentFrame = self.sceneView.session.currentFrame else {
+            return
+        }
+        
+        guard let image = UIImage.gifImageWithURL("https://preview.ibb.co/iOa7nc/Heart.gif") else {
+            return
+            
+        }
+        
+        let height = width*image.size.height/image.size.width
+        
+        
+        
+        //let bundleURL = Bundle.main.url(forResource: "Heart", withExtension: "gif") ------ for hardcoded files
+        let animation : CAKeyframeAnimation = createGIFAnimation(url: url)!
+        let layer = CALayer()
+        layer.bounds = CGRect(x: 0, y: 0, width: 900, height: 900)
+        
+        layer.add(animation, forKey: "contents")
+        let tempView = UIView.init(frame: CGRect(x: 0, y: 0, width: 900, height: 900))
+        tempView.backgroundColor = UIColor.clear
+        tempView.layer.bounds = CGRect(x: -450, y: -450, width: tempView.frame.size.width, height: tempView.frame.size.height)
+        tempView.layer.addSublayer(layer)
+        
+        let newMaterial = SCNMaterial()
+        newMaterial.isDoubleSided = true
+        newMaterial.diffuse.contents = tempView.layer
+        
+        
+        
+        let plane = SCNPlane(width: width, height: height)
+        plane.firstMaterial = newMaterial
+        
+        let node = NodeObject2D(width: width, distanceToUser: distanceToUser, offsetVertical: offsetVert, offsetAngle: offsetAngle)
+        
+        
+        node.geometry = plane
+        
+        self.nodes.append(node)
+        self.sceneView.scene.rootNode.addChildNode(node)
+        
+        node.placeObject(currentFrame: currentFrame)
+        node.animate()
+        
+        
+    }
+    
+    //-------------- THIS FUNCTION CREATES THE GIF ANIMATION
+    func createGIFAnimation(url:URL) -> CAKeyframeAnimation?{
+        
+        guard let src = CGImageSourceCreateWithURL(url as CFURL, nil) else { return nil }
+        let frameCount = CGImageSourceGetCount(src)
+        
+        // Total loop time
+        var time : Float = 0
+        
+        // Arrays
+        var framesArray = [AnyObject]()
+        var tempTimesArray = [NSNumber]()
+        
+        // Loop
+        for i in 0..<frameCount {
+            
+            // Frame default duration
+            var frameDuration : Float = 0.1;
+            
+            let cfFrameProperties = CGImageSourceCopyPropertiesAtIndex(src, i, nil)
+            guard let framePrpoerties = cfFrameProperties as? [String:AnyObject] else {return nil}
+            guard let gifProperties = framePrpoerties[kCGImagePropertyGIFDictionary as String] as? [String:AnyObject]
+                else { return nil }
+            
+            // Use kCGImagePropertyGIFUnclampedDelayTime or kCGImagePropertyGIFDelayTime
+            if let delayTimeUnclampedProp = gifProperties[kCGImagePropertyGIFUnclampedDelayTime as String] as? NSNumber {
+                frameDuration = delayTimeUnclampedProp.floatValue
+            }
+            else{
+                if let delayTimeProp = gifProperties[kCGImagePropertyGIFDelayTime as String] as? NSNumber {
+                    frameDuration = delayTimeProp.floatValue
+                }
+            }
+            
+            // Make sure its not too small
+            if frameDuration < 0.011 {
+                frameDuration = 0.100;
+            }
+            
+            // Add frame to array of frames
+            if let frame = CGImageSourceCreateImageAtIndex(src, i, nil) {
+                tempTimesArray.append(NSNumber(value: frameDuration))
+                framesArray.append(frame)
+            }
+            
+            // Compile total loop time
+            time = time + frameDuration
+        }
+        
+        var timesArray = [NSNumber]()
+        var base : Float = 0
+        for duration in tempTimesArray {
+            timesArray.append(NSNumber(value: base))
+            base = base + ( duration.floatValue / time )
+        }
+        
+        // From documentation of 'CAKeyframeAnimation':
+        // the first value in the array must be 0.0 and the last value must be 1.0.
+        // The array should have one more entry than appears in the values array.
+        // For example, if there are two values, there should be three key times.
+        timesArray.append(NSNumber(value: 1.0))
+        
+        // Create animation
+        let animation = CAKeyframeAnimation(keyPath: "contents")
+        
+        animation.beginTime = AVCoreAnimationBeginTimeAtZero
+        animation.duration = CFTimeInterval(time)
+        animation.repeatCount = Float.greatestFiniteMagnitude;
+        animation.isRemovedOnCompletion = false
+        animation.fillMode = kCAFillModeForwards
+        animation.values = framesArray
+        animation.keyTimes = timesArray
+        //animation.timingFunction = CAMediaTimingFunction(name: kCAMediaTimingFunctionLinear)
+        animation.calculationMode = kCAAnimationDiscrete
+        
+        return animation;
+    }
     
     
   
@@ -412,15 +543,25 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNSceneRendererDeleg
 
     
     @IBAction func onButtonTouch(_ button: UIButton) {
+        
+        
         run_on_background_thread {
 
             for _ in 1...10 {
                 self.place2DImage(width: CGFloat.random(min: 0.05, max: 0.2), distanceToUser: Float.random(min: 0.2, max: 1.0), offsetVert: Float.random(min: 0.0, max: 0.5), offsetAngle: Float.random(min: 0.0, max: 2*Float.pi), image: #imageLiteral(resourceName: "heart"))
                 self.place2DImage(width: CGFloat.random(min: 0.05, max: 0.2), distanceToUser: Float.random(min: 0.5, max: 2.0), offsetVert: Float.random(min: 0.0, max: 0.5), offsetAngle: Float.random(min: 0.0, max: 2*Float.pi), image: #imageLiteral(resourceName: "heart"), animationStartingOpacity: CGFloat.random(min: 0.7, max: 0.9), animationEndingOpacity: CGFloat.random(min: 0.4, max: 0.6), animationTranslationVector: SCNVector3Make(Float.random(min: 0.0, max: 0.1), Float.random(min: 0.0, max: 0.1), Float.random(min: 0.0, max: 0.1)), animationTime: Double.random(min: 2.0, max: 5.0), animateBack: true, animationRepeat: true)
                 
+                
+                if let url = URL(string: "https://media.giphy.com/media/3CSElA3OxWFcuk44mI/giphy.gif"){
+                    self.place2DGif(width: CGFloat.random(min: 0.05, max: 0.2), distanceToUser: Float.random(min: 0.2, max: 1.0), offsetVert: Float.random(min: 0.0, max: 0.5), offsetAngle: Float.random(min: 0.0, max: 2*Float.pi), url: url)
+                    
+                }
+                
             }
         
         }
+            
+        
     }
     
     func run_on_background_thread(code: @escaping () -> Void){
