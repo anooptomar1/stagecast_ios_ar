@@ -28,6 +28,10 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNSceneRendererDeleg
             session.run(worldSessionConfig, options: [.resetTracking, .removeExistingAnchors])
         }
         
+        
+        //IMPORTANT
+        self.loadImageOrGif()
+        
     }
 
 	override func viewDidAppear(_ animated: Bool) {
@@ -108,6 +112,28 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNSceneRendererDeleg
 	}
 	
  
+    // ------------------- STAGECAST SERVER CALL ------------------
+    
+    func loadImageOrGif(){
+        
+        //TODO: Get image from url -> Url to stagecast server
+        var urlString = "https://media.giphy.com/media/3CSElA3OxWFcuk44mI/giphy.gif"
+        
+        guard let image = UIImage.gifImageWithURL(urlString) else {
+            return
+            
+        }
+        
+        self.imageUrl = URL(string: urlString)
+        self.image = image
+        
+        //Show preview image
+        self.imageView_preview.image = self.image
+        self.imageView_preview.isHidden = false
+        
+        
+        
+    }
 
 
    
@@ -135,6 +161,12 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNSceneRendererDeleg
 		}
 	}
 	
+    
+    @IBOutlet var imageView_preview: UIImageView!
+    
+    var image: UIImage?
+    var imageUrl: URL?
+    
 	@IBOutlet weak var screenshotButton: UIButton!
 	
 	@IBAction func takeScreenshot() {
@@ -186,11 +218,14 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNSceneRendererDeleg
         run_on_background_thread {
             
             for _ in 1...10 {
-                self.place2DImage(width: CGFloat.random(min: 0.05, max: 0.2), distanceToUser: Float.random(min: 0.2, max: 1.0), offsetVert: Float.random(min: 0.0, max: 0.5), offsetAngle: Float.random(min: 0.0, max: 2*Float.pi), image: #imageLiteral(resourceName: "heart"))
-                self.place2DImage(width: CGFloat.random(min: 0.05, max: 0.2), distanceToUser: Float.random(min: 0.5, max: 2.0), offsetVert: Float.random(min: 0.0, max: 0.5), offsetAngle: Float.random(min: 0.0, max: 2*Float.pi), image: #imageLiteral(resourceName: "heart"), animationStartingOpacity: CGFloat.random(min: 0.7, max: 0.9), animationEndingOpacity: CGFloat.random(min: 0.4, max: 0.6), animationTranslationVector: SCNVector3Make(Float.random(min: 0.0, max: 0.1), Float.random(min: 0.0, max: 0.1), Float.random(min: 0.0, max: 0.1)), animationTime: Double.random(min: 2.0, max: 5.0), animateBack: true, animationRepeat: true)
+                
+                if let image = self.image{
+                    self.place2DImage(width: CGFloat.random(min: 0.05, max: 0.2), distanceToUser: Float.random(min: 0.2, max: 1.0), offsetVert: Float.random(min: 0.0, max: 0.5), offsetAngle: Float.random(min: 0.0, max: 2*Float.pi), image: image)
+                    self.place2DImage(width: CGFloat.random(min: 0.05, max: 0.2), distanceToUser: Float.random(min: 0.5, max: 2.0), offsetVert: Float.random(min: 0.0, max: 0.5), offsetAngle: Float.random(min: 0.0, max: 2*Float.pi), image: image, animationStartingOpacity: CGFloat.random(min: 0.7, max: 0.9), animationEndingOpacity: CGFloat.random(min: 0.4, max: 0.6), animationTranslationVector: SCNVector3Make(Float.random(min: 0.0, max: 0.1), Float.random(min: 0.0, max: 0.1), Float.random(min: 0.0, max: 0.1)), animationTime: Double.random(min: 2.0, max: 5.0), animateBack: true, animationRepeat: true)
+                }
                 
                 
-                if let url = URL(string: "https://media.giphy.com/media/3CSElA3OxWFcuk44mI/giphy.gif"){
+                if let url = self.imageUrl{
                     self.place2DGif(width: CGFloat.random(min: 0.05, max: 0.2), distanceToUser: Float.random(min: 0.2, max: 1.0), offsetVert: Float.random(min: 0.0, max: 0.5), offsetAngle: Float.random(min: 0.0, max: 2*Float.pi), url: url)
                     
                 }
@@ -211,6 +246,9 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNSceneRendererDeleg
     
 
     //--------------------------------------- STUFF TO PLACE AND REMOVE OBJECTS -------------------------------------------
+    
+    
+    
 
     
     
@@ -288,7 +326,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNSceneRendererDeleg
             return
         }
         
-        guard let image = UIImage.gifImageWithURL("https://preview.ibb.co/iOa7nc/Heart.gif") else {
+        guard let image = self.image else{
             return
             
         }
